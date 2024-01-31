@@ -1,0 +1,108 @@
+@font-face {
+  font-family: 'Inter Regular';
+  src: url('/fonts/inter/static/Inter-Regular.ttf') format('truetype');
+}
+
+:root {
+  --lecture-color: #fff;
+  --lecture-bg-color: #ffa693;
+  --lab-color: #fff;
+  --lab-bg-color: #79d097;
+  --practical-color: #fff;
+  --practical-bg-color: #8aacee;
+  --seminar-color: #fff;
+  --seminar-bg-color: #dfd46e;
+
+  /* --tg-color-scheme: dark;
+  --tg-theme-bg-color: #17212b;
+  --tg-theme-button-color: #5288c1;
+  --tg-theme-button-text-color: #ffffff;
+  --tg-theme-hint-color: #708499;
+  --tg-theme-link-color: #6ab3f3;
+  --tg-theme-secondary-bg-color: #232e3c;
+  --tg-theme-text-color: #f5f5f5;
+  --tg-viewport-height: 621px;
+  --tg-viewport-stable-height: 621px; */
+
+  --tg-theme-text-color: #000;
+  --tg-theme-bg-color: linear-gradient(235deg, rgba(196, 251, 212, 0.20) -2.6%, rgba(255, 255, 255, 0.00) 109.02%),
+    linear-gradient(110deg, rgba(216, 186, 255, 0.20) 2.61%, rgba(255, 255, 255, 0.00) 108.92%),
+    #EDF7FF;
+  --tg-theme-secondary-bg-color: #fff;
+  --tg-theme-link-color: #081236;
+  --tg-theme-hint-color: #d6e2fd;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+
+body {
+  height: 100%;
+  overflow: hidden auto;
+  background: var(--tg-theme-bg-color);
+  color: var(--tg-theme-text-color)
+}
+
+html {
+  height: 100%;
+  overflow: hidden;
+  /* overscroll-behavior: none; */
+}
+
+#app {
+  height: 100%;
+  font-family: 'Inter Regular';
+}
+
+a {
+  color: var(--tg-theme-link-color);
+}
+
+button {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  border: none;
+  border-radius: 11.2px;
+  background: #E0E9FE;
+  fill: #5D49B7;
+  color: #5D49B7;
+  cursor: pointer;
+}
+
+button:has(span) {
+  padding: 9px 22px;
+}
+
+button svg {
+  width: 24px;
+  height: 24px;
+}
+
+button:has(span) svg {
+  margin-right: 8px;
+}
+
+.lecture-global {
+  color: var(--lecture-color);
+  background-color: var(--lecture-bg-color);
+}
+
+.lab-global {
+  color: var(--lab-color);
+  background-color: var(--lab-bg-color);
+}
+
+.practical-global {
+  color: var(--practical-color);
+  background-color: var(--practical-bg-color);
+}
+
+.seminar-global {
+  color: var(--seminar-color);
+  background-color: var(--seminar-bg-color);
+}
