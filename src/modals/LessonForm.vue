@@ -330,6 +330,13 @@ scheduleStore.loadLecturers()
         >
           + Місце
         </button>
+        <p>Скасовано</p>
+        <SwitchInput
+          :checked="lesson.canceled"
+          id="lesson-form__lesson-canceled"
+          name="lesson-form__lesson-canceled"
+          @change="lesson.canceled = $event"
+        />
         <button type="submit">
           {{ lesson.code ? 'Зберегти' : 'Створити' }}
         </button>

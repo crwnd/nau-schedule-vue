@@ -13,6 +13,7 @@ import router from './router'
 import LessonView from './modals/LessonView.vue'
 import LessonForm from './modals/LessonForm.vue'
 import LessonChangeForm from './modals/LessonChangeForm.vue'
+import SwitchInput from './components/SwitchInput.vue'
 
 const app = createApp(App)
 app.use(createPinia())
@@ -35,5 +36,6 @@ app.use(
 app.component('LessonView', LessonView)
 app.component('LessonForm', LessonForm)
 app.component('LessonChangeForm', LessonChangeForm)
+app.component('SwitchInput', SwitchInput)
 
 app.mount('#app')
