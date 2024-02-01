@@ -1,7 +1,8 @@
 {
   "name": "vue-schedule",
   "version": "0.0.0",
-  "private": true,
+  "private": false,
+  "repository": "github:crwnd/nau-schedule-vue",
   "scripts": {
     "dev": "vite --host",
     "build": "vite build --mode development",
