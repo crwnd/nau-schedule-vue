@@ -383,10 +383,10 @@ scheduleStore.loadLecturers()
             <select v-model="lessonChange.places[i].place_type">
               <option
                 v-for="place_type in Object.entries(placeType)"
-                :key="place_type[1]"
-                :value="place_type[1]"
+                :key="place_type[0]"
+                :value="place_type[0]"
               >
-                {{ place_type[0] }}
+                {{ place_type[1] }}
               </option>
             </select>
             <button

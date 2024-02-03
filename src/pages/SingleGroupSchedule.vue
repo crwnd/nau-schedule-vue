@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, nextTick, onMounted } from 'vue'
-import Header from '../components/Header.vue'
+import Header from '@/components/Header.vue'
+import IconGoogleMeet from '@/components/icons/IconGoogleMeet.vue'
+import IconMapPin from '@/components/icons/IconMapPin.vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useScheduleStore } from '@/stores/schedule'
 import { useGroupsStore } from '@/stores/groups'
@@ -21,7 +23,7 @@ import {
   datesAreOnSameDay,
 } from '@/utils/functions.js'
 // import { useWebApp } from 'vue-tg'
-import { TMemberPermissions } from '@/utils/types.d.js'
+import { PlaceType, TMemberPermissions } from '@/utils/types.d.js'
 // const tgUser = useWebApp()
 
 const userStore = useUserStore()
@@ -229,6 +231,28 @@ const numDays = (y: number, m: number) => new Date(y, m, 0).getDate()
 const toMondayBased = (index: number) => (index === 0 ? 6 : index - 1)
 
 const scrollContainer = ref()
+
+const getPlaceEntry = (place: { text: string; place_type: PlaceType }) => {
+  const placeObj = {
+    label: '',
+    link: null as string | null,
+  }
+  switch (place.place_type) {
+    case PlaceType.auditory:
+      placeObj.label = place.text
+      break
+    case PlaceType.online_meet:
+      placeObj.label = 'Meet'
+      placeObj.link = place.text
+      break
+    default:
+      placeObj.label = place.text
+      break
+  }
+  console.log(placeObj)
+  return placeObj
+}
+
 onMounted(() => {
   scrollContainer.value.addEventListener('wheel', (evt: WheelEvent) => {
     evt.preventDefault()
@@ -494,15 +518,34 @@ onMounted(() => {
                     <span class="schedule-table__col__lecture__subgroup__name">
                       {{ lecture.names[0] }}
                     </span>
-                    <div class="schedule-table__col__lecture__subgroup__place">
-                      {{ lecture.places?.map((el) => el.text).join(', ') }}
-                    </div>
                     <div
                       class="schedule-table__col__lecture__subgroup__lecturer"
                     >
                       {{ lecture.lecturers[0]?.surname }}
                       {{ lecture.lecturers[0]?.name?.[0] }}.
                       {{ lecture.lecturers[0]?.patronymic?.[0] }}.
+                    </div>
+                    <div class="schedule-table__col__lecture__subgroup__place">
+                      <div v-for="(place, i) in lecture.places" :key="i">
+                        <a
+                          v-if="getPlaceEntry(place).link"
+                          :href="getPlaceEntry(place).link ?? ''"
+                          class="schedule-table__col__lecture__subgroup__place__row"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          @click.stop=""
+                        >
+                          <IconGoogleMeet size="22" />
+                          {{ getPlaceEntry(place).label }}
+                        </a>
+                        <span
+                          v-else
+                          class="schedule-table__col__lecture__subgroup__place__row"
+                        >
+                          <IconMapPin size="22" />
+                          {{ getPlaceEntry(place).label }}
+                        </span>
+                      </div>
                     </div>
                     <div
                       v-if="
@@ -622,7 +665,7 @@ main {
 }
 #main-content {
   width: 100%;
-  max-width: 1600px;
+  max-width: 1800px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -739,7 +782,7 @@ main {
 }
 #schedule-table {
   width: 100%;
-  max-width: 1400px;
+  /* max-width: 1400px; */
   height: auto;
   display: flex;
   flex-direction: row;
@@ -881,6 +924,22 @@ main {
 .schedule-table__col__lecture__subgroup__admin-actions button {
   padding: 4px 8px;
   border-radius: 7px;
+}
+.schedule-table__col__lecture__subgroup__place {
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  margin: 12px 0;
+}
+.schedule-table__col__lecture__subgroup__place__row {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+  color: #081236;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: normal;
 }
 @media screen and (max-width: 1024px) {
   #schedule-table {

@@ -5,13 +5,13 @@ export type lecturerShort = {
     patronymic: string
 }
 export enum PlaceType {
-    "online",
-    "online_zoom",
-    "online_meet",
-    "online_other",
-    "offline",
-    "offline_classroom",
-    "auditory"
+    "online" = "online",
+    "online_zoom" = "online_zoom",
+    "online_meet" = "online_meet",
+    "online_other" = "online_other",
+    "offline" = "offline",
+    "offline_classroom" = "offline_classroom",
+    "auditory" = "auditory"
 }
 export type Lesson = {
     code?: string,

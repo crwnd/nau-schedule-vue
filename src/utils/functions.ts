@@ -65,12 +65,12 @@ export function pad(num: number, size: number) {
     return str;
 }
 export const placeType = {
-    'Онлайн': 'online',
-    'Онлайн (Zoom)': 'online_zoom',
-    'Онлайн (Meet)': 'online_meet',
-    'Онлайн (Other)': 'online_other',
-    'Офлайн': 'offline',
-    'Офлайн (Classroom)': 'offline_classroom',
-    "Аудиторія": 'auditory'
+    'online': 'Онлайн',
+    'online_zoom': 'Zoom',
+    'online_meet': 'Meet',
+    'online_other': 'Інше',
+    'offline': 'Офлайн',
+    'offline_classroom': 'Офлайн (Classroom)',
+    'auditory': 'Аудиторія'
 }
 export const isUndefined = (value: any) => typeof value === 'undefined'
