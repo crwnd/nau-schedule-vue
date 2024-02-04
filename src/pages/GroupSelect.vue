@@ -9,7 +9,7 @@ const router = useRouter()
 <template>
   <div>
     <Header>
-      <template #default>
+      <!-- <template #default>
         <div id="header-group-select">
           <select
             v-if="groupsStore.groups?.length"
@@ -28,7 +28,7 @@ const router = useRouter()
             </option>
           </select>
         </div>
-      </template>
+      </template> -->
     </Header>
     <main>
       <div id="main-content">

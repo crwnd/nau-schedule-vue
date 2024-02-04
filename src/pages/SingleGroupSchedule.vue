@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, nextTick, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import Header from '@/components/Header.vue'
 import IconGoogleMeet from '@/components/icons/IconGoogleMeet.vue'
 import IconMapPin from '@/components/icons/IconMapPin.vue'
@@ -75,9 +75,24 @@ const dateFromRoute = computed(() => {
     parseInt((route.params.month || '').toString()) - 1,
     parseInt((route.params.day || '').toString()),
   )
+  console.log('dateObj', dateObj)
+  console.log('date', date)
 
   return { date, week: getWeekNumber(date)[1], ...dateObj }
 })
+const isDayRequested = (dayIndex: number) =>
+  datesAreOnSameDay(
+    new Date(
+      dateFromRoute.value.year,
+      dateFromRoute.value.month,
+      dateFromRoute.value.day,
+    ),
+    new Date(
+      daysOfThisWeek.value[dayIndex].year,
+      daysOfThisWeek.value[dayIndex].month - 1,
+      daysOfThisWeek.value[dayIndex].day,
+    ),
+  )
 const pageObj = computed(() => {
   const resp = scheduleStore.getByHoursSchedule(
     route.params.group_code.toString(),
@@ -85,12 +100,7 @@ const pageObj = computed(() => {
     dateFromRoute.value.year,
     true,
   )
-  // const activeDayIndex = resp?.days.findIndex((el) => el.isToday)
-  // if (activeDayIndex !== -1 && activeDayIndex !== undefined) {
-  //   highlightThisDay(activeDayIndex)
-  // } else {
-  highlightThisDay(toMondayBased(dateFromRoute.value.date.getDay()))
-  // }
+  // highlightThisDay(toMondayBased(dateFromRoute.value.date.getDay()))
   return resp
 })
 const bar = computed(() => {
@@ -182,15 +192,18 @@ const bar = computed(() => {
 
   return weeks
 })
+const barMobile = computed(() =>
+  bar.value.find((el) => el.week === dateFromRoute.value.week),
+)
 
-async function highlightThisDay(activeDayIndex: number) {
-  await nextTick()
-  dayRefs.value[activeDayIndex]?.scrollIntoView({
-    behavior: 'auto',
-    block: 'nearest',
-    inline: 'center',
-  })
-}
+// async function highlightThisDay(activeDayIndex: number) {
+//   await nextTick()
+//   dayRefs.value[activeDayIndex]?.scrollIntoView({
+//     behavior: 'auto',
+//     block: 'nearest',
+//     inline: 'center',
+//   })
+// }
 
 const daysOfThisWeek = computed(() => {
   let arr: Array<{
@@ -249,7 +262,6 @@ const getPlaceEntry = (place: { text: string; place_type: PlaceType }) => {
       placeObj.label = place.text
       break
   }
-  console.log(placeObj)
   return placeObj
 }
 
@@ -295,8 +307,36 @@ onMounted(() => {
           <div id="week-schedule">
             <div id="week-schedule__topbar">
               <div class="month-selector">
-                <h2>Місяць</h2>
-                <select
+                <!-- <h2>Місяць</h2> -->
+                <input
+                  :value="
+                    [
+                      dateFromRoute.year,
+                      padToTwoDigits(dateFromRoute.month + 1),
+                      padToTwoDigits(dateFromRoute.day),
+                    ].join('-')
+                  "
+                  type="date"
+                  name="lesson-start-date"
+                  id="lesson-form__lesson-start-date"
+                  @change="
+                    (e) =>
+                      router.push({
+                        params: {
+                          year: (e.target as HTMLInputElement).value.split(
+                            '-',
+                          )[0],
+                          month: (e.target as HTMLInputElement).value.split(
+                            '-',
+                          )[1],
+                          day: (e.target as HTMLInputElement).value.split(
+                            '-',
+                          )[2],
+                        },
+                      })
+                  "
+                />
+                <!-- <select
                   :value="dateFromRoute.month + 1"
                   @input="
                     (e) =>
@@ -315,7 +355,7 @@ onMounted(() => {
                   >
                     {{ month }}
                   </option>
-                </select>
+                </select> -->
               </div>
               <div class="add-lesson">
                 <button
@@ -408,10 +448,42 @@ onMounted(() => {
               >
             </div> -->
             <div id="week-schedule__days" ref="scrollContainer">
+              <div v-if="barMobile" class="week-schedule__days__week mobile">
+                <p v-if="pageObj?.weekNumber">
+                  {{
+                    barMobile.weekNumber !== -1
+                      ? barMobile.weekNumber === 2
+                        ? 'Другий'
+                        : 'Перший'
+                      : 'Невідомий'
+                  }}
+                  тиждень
+                </p>
+                <div class="week-schedule__days__week__days">
+                  <button
+                    v-for="(day, dayIndex) of barMobile.days"
+                    :key="dayIndex"
+                    class="week-schedule__days__week__day"
+                    :class="{ active: day.isToday, requested: day.isRequested }"
+                    @click="
+                      router.push({
+                        params: { day: day.day, month: day.month + 1 },
+                      })
+                    "
+                  >
+                    <span class="week-schedule__days__week__day__name">{{
+                      dayNamesShort[dayIndex]
+                    }}</span>
+                    <span class="week-schedule__days__week__day__number">
+                      {{ day.day }}</span
+                    >
+                  </button>
+                </div>
+              </div>
               <div
                 v-for="(week, weekIndex) of bar"
                 :key="weekIndex"
-                class="week-schedule__days__week"
+                class="week-schedule__days__week desktop"
               >
                 <p v-if="pageObj?.weekNumber">
                   {{
@@ -448,7 +520,10 @@ onMounted(() => {
               v-for="(day, dayIndex) of pageObj?.days"
               :key="dayIndex"
               :ref="(el) => (el ? dayRefs.push(el as Element) : '')"
-              :class="{ active: day.isToday }"
+              :class="{
+                active: day.isToday,
+                requested: isDayRequested(dayIndex),
+              }"
             >
               <div class="schedule-table__col__head">
                 <span class="schedule-table__col__head__day-number">{{
@@ -465,9 +540,12 @@ onMounted(() => {
                 class="schedule-table__col__lectures"
               >
                 <div
-                  class="schedule-table__col__lecture"
                   v-for="(lecturesOnTile, time, index) in day.lessons"
                   :key="index"
+                  :class="[
+                    'schedule-table__col__lecture',
+                    { canceled: lecturesOnTile[0].canceled },
+                  ]"
                 >
                   <div
                     v-for="(lecture, index) in lecturesOnTile"
@@ -756,6 +834,9 @@ main {
   justify-content: center;
   flex-shrink: 0;
 }
+.week-schedule__days__week.mobile {
+  display: none;
+}
 .week-schedule__days__week__days {
   width: 100%;
   display: flex;
@@ -779,6 +860,9 @@ main {
 }
 .week-schedule__days__week__day.requested {
   background-color: #fff;
+}
+.week-schedule__days__week__day__number {
+  margin-top: 4px;
 }
 #schedule-table {
   width: 100%;
@@ -805,6 +889,9 @@ main {
   scroll-snap-stop: always;
 }
 .schedule-table__col.active {
+  background-color: var(--tg-theme-hint-color);
+}
+.schedule-table__col.requested {
   background-color: var(--tg-theme-hint-color);
 }
 .schedule-table__col__head {
@@ -847,6 +934,17 @@ main {
 .schedule-table__col__lecture {
   border-radius: 10px;
   background: var(--tg-theme-secondary-bg-color);
+}
+.schedule-table__col__lecture.canceled {
+  /* background-color: #e5e5f7; */
+  opacity: 0.8;
+  background: repeating-linear-gradient(
+    -45deg,
+    rgb(225, 225, 225),
+    rgb(225, 225, 225) 6px,
+    var(--tg-theme-secondary-bg-color) 5px,
+    var(--tg-theme-secondary-bg-color) 25px
+  );
 }
 .schedule-table__col__lecture__subgroup {
   width: 100%;
@@ -957,9 +1055,20 @@ main {
   .week-schedule__days__week {
     width: 100%;
   }
+  .week-schedule__days__week.mobile {
+    display: flex;
+    padding: 0 4px;
+  }
+  .week-schedule__days__week.desktop {
+    display: none;
+  }
   .week-schedule__days__week__day {
     /* 4px gap */
     width: calc(calc(100% - 24px) / 7);
+  }
+
+  .schedule-table__col:not(.schedule-table__col.requested) {
+    display: none;
   }
 }
 </style>

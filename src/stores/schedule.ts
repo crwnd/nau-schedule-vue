@@ -41,7 +41,10 @@ export const useScheduleStore = defineStore('schedule', () => {
     const endpoint = auth0.isAuthenticated.value ? 'weekScheduleByWeek' : 'weekScheduleByWeekPublic'
     const authHeader: HeadersInit = auth0.isAuthenticated.value ? { 'Authorization': `Bearer ${await auth0.getAccessTokenSilently()}` } : {}
 
-    if (!refresh && dataStore.value.some((el) => el.group_code === group_code && el.week === week)) {
+    if (isNaN(week) || isNaN(year)) {
+      return
+    }
+    if (!refresh && dataStore.value.some((el) => el.group_code === group_code && el.week === week && el.year === year)) {
       return
     }
     if (!refresh)
@@ -58,6 +61,10 @@ export const useScheduleStore = defineStore('schedule', () => {
         })
       ).json()
 
+      if (resp.error) {
+        throw new Error(resp.error)
+      }
+
       dataStore.value[dataStore.value.findIndex((el) => el.group_code === group_code && el.week === week && el.year === year)] = {
         isLoading: false, group_code, week, year, weekNumber: resp.week_number, days: resp.days.map((el: { lessons: outputDayObject[] }) => normalize(el.lessons))
       }
@@ -67,8 +74,8 @@ export const useScheduleStore = defineStore('schedule', () => {
   }
 
   function getSchedule(group_code: string, week: number, year: number) {
-    if (dataStore.value.some((el) => el.group_code === group_code && el.week === week)) {
-      return dataStore.value.find((el) => el.group_code === group_code && el.week === week);
+    if (dataStore.value.some((el) => el.group_code === group_code && el.week === week && el.year === year)) {
+      return dataStore.value.find((el) => el.group_code === group_code && el.week === week && el.year === year);
     }
     loadWeek(week, year, group_code);
     return dataStore.value[dataStore.value.length - 1];
@@ -86,6 +93,7 @@ export const useScheduleStore = defineStore('schedule', () => {
       new Date('Jan 01, ' + year + ' 01:00:00').getTime() +
       604800000 * (week - 1),
     ).getTime() + 1000 * 60 * 60 * 24)
+    console.log('getByHoursSchedule', group_code, week, year, preloadPrevNext)
 
     const schedule = getSchedule(group_code, week, year)
     if (schedule?.isLoading === false) {
