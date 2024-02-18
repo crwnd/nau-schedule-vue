@@ -11,12 +11,12 @@ export const useGroupsStore = defineStore('groups', () => {
     const isLoading = ref(false)
     const groups = computed((): TGroup[] => {
         if (isLoading.value) {
-            return fallbackData.value.data
+            return fallbackData.value.data ?? []
         }
         if (!userData.value) {
-            return fallbackData.value.data
+            return fallbackData.value.data ?? []
         }
-        return userData.value
+        return userData.value ?? []
     })
 
     async function updateGroups(showLoading = true) {
@@ -25,16 +25,16 @@ export const useGroupsStore = defineStore('groups', () => {
         if (showLoading) isLoading.value = true
         try {
             const resp = await (
-                await fetch(`${import.meta.env.VITE_API_URL}/groups/`, {
+                await fetch(`${import.meta.env.VITE_API_URL}/groups/index`, {
                     method: 'GET',
                     // headers: { 'Content-Type': 'application/json' },
                     // body: JSON.stringify({ init_data: tgUser.initData })
                     // body: JSON.stringify({ init_data: null })
                 })
             ).json()
-            userData.value = resp.groups
-            fallbackData.value = { data: resp.groups, lastSync: Math.floor(new Date().valueOf() / 1000) }
-            localStorage.setItem('groups', JSON.stringify({ data: resp.groups, lastSync: Math.floor(new Date().valueOf() / 1000) }))
+            userData.value = resp
+            fallbackData.value = { data: resp, lastSync: Math.floor(new Date().valueOf() / 1000) }
+            localStorage.setItem('groups', JSON.stringify({ data: resp, lastSync: Math.floor(new Date().valueOf() / 1000) }))
         } catch { console.log('groups query failed') } finally { if (showLoading) isLoading.value = false }
     }
 

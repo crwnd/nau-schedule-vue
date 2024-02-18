@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import { defineStore } from 'pinia'
 // import { useWebApp } from 'vue-tg'
 import { type Lesson, type LessonChange, type LessonTemplate, type lecturerShort, type outputDayObject } from '@/utils/types.d.js'
-import debounce from 'lodash.debounce'
+import debounce from 'lodash/debounce'
 import { getDateFromWeek, getWeekNumber } from '@/utils/functions.js'
 import { useAuth0 } from "@auth0/auth0-vue"
 import { useGroupsStore } from './groups'
@@ -38,7 +38,7 @@ export const useScheduleStore = defineStore('schedule', () => {
   }
 
   const loadWeek = async (week: number, year: number, group_code: string, refresh = false) => {
-    const endpoint = auth0.isAuthenticated.value ? 'weekScheduleByWeek' : 'weekScheduleByWeekPublic'
+    const endpoint = 'weekScheduleByWeek'//auth0.isAuthenticated.value ? 'weekScheduleByWeekAuth0' : 'weekScheduleByWeekPublic'
     const authHeader: HeadersInit = auth0.isAuthenticated.value ? { 'Authorization': `Bearer ${await auth0.getAccessTokenSilently()}` } : {}
 
     if (isNaN(week) || isNaN(year)) {
@@ -126,7 +126,7 @@ export const useScheduleStore = defineStore('schedule', () => {
   async function makeUpdate(updateObject: Record<string, any>, lessonId: string, dayIndex: number, week: number, year: number, group_code: string) {
     const date = getDateFromWeek(dayIndex, week, year)
     const arr = [date.getFullYear(), date.getMonth() + 1, date.getDate()]
-    await fetch(`${import.meta.env.VITE_API_URL}/purple/change`, {
+    await fetch(`${import.meta.env.VITE_API_URL}/purple/changes/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -153,14 +153,14 @@ export const useScheduleStore = defineStore('schedule', () => {
     if (!auth0.isAuthenticated.value) {
       return
     }
-    const lessonResp = (await (await fetch(`${import.meta.env.VITE_API_URL}/purple/lesson/`, {
+    const lessonResp = (await (await fetch(`${import.meta.env.VITE_API_URL}/purple/lessons/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${await auth0.getAccessTokenSilently()}`
       },
       body: JSON.stringify({ ...lesson, group_code })
-    })).json()).lesson
+    })).json())
     const startDate = new Date(lessonResp.start_date[0], lessonResp.start_date[1] - 1, lessonResp.start_date[2])
     const endDate = new Date(lessonResp.end_date[0], lessonResp.end_date[1] - 1, lessonResp.end_date[2])
     await Promise.all(
@@ -173,14 +173,14 @@ export const useScheduleStore = defineStore('schedule', () => {
     if (!auth0.isAuthenticated.value) {
       return
     }
-    const lessonResp = (await (await fetch(`${import.meta.env.VITE_API_URL}/purple/lesson/`, {
-      method: 'PATCH',
+    const lessonResp = (await (await fetch(`${import.meta.env.VITE_API_URL}/purple/lessons/update`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${await auth0.getAccessTokenSilently()}`
       },
       body: JSON.stringify({ ...lesson, group_code })
-    })).json()).lesson
+    })).json())
     const startDate = new Date(lessonResp.start_date[0], lessonResp.start_date[1] - 1, lessonResp.start_date[2])
     const endDate = new Date(lessonResp.end_date[0], lessonResp.end_date[1] - 1, lessonResp.end_date[2])
     await Promise.all(
@@ -193,14 +193,14 @@ export const useScheduleStore = defineStore('schedule', () => {
     if (!auth0.isAuthenticated.value) {
       return
     }
-    const lessonResp = (await (await fetch(`${import.meta.env.VITE_API_URL}/purple/lesson/`, {
-      method: 'DELETE',
+    const lessonResp = (await (await fetch(`${import.meta.env.VITE_API_URL}/purple/lessons/destroy`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${await auth0.getAccessTokenSilently()}`
       },
       body: JSON.stringify({ code, group_code })
-    })).json()).lesson
+    })).json())
     const startDate = new Date(lessonResp.start_date[0], lessonResp.start_date[1] - 1, lessonResp.start_date[2])
     const endDate = new Date(lessonResp.end_date[0], lessonResp.end_date[1] - 1, lessonResp.end_date[2])
     await Promise.all(
@@ -217,7 +217,7 @@ export const useScheduleStore = defineStore('schedule', () => {
 
     try {
       const resp = await (
-        await fetch(`${import.meta.env.VITE_API_URL}/purple/template?${new URLSearchParams({ speciality })}`, {
+        await fetch(`${import.meta.env.VITE_API_URL}/purple/template/index?${new URLSearchParams({ speciality })}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -255,7 +255,7 @@ export const useScheduleStore = defineStore('schedule', () => {
 
     try {
       const resp = await (
-        await fetch(`${import.meta.env.VITE_API_URL}/lecturers`, {
+        await fetch(`${import.meta.env.VITE_API_URL}/lecturers/index`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json'
@@ -265,7 +265,7 @@ export const useScheduleStore = defineStore('schedule', () => {
 
       lecturers.value = resp as lecturerShort[]
     } catch (e) {
-      console.warn('fetch /lecturers failed', e)
+      console.warn('fetch /lecturers/index failed', e)
     }
 
     isLecturersLoading.value = false
@@ -284,7 +284,7 @@ export const useScheduleStore = defineStore('schedule', () => {
 
     try {
       const resp = await (
-        await fetch(`${import.meta.env.VITE_API_URL}/purple/change/many?${new URLSearchParams({ lesson_code, group_code })}`, {
+        await fetch(`${import.meta.env.VITE_API_URL}/purple/changes/getMany?${new URLSearchParams({ lesson_code, group_code })}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -294,16 +294,16 @@ export const useScheduleStore = defineStore('schedule', () => {
       ).json()
 
       lessonChanges.value = lessonChanges.value.filter((el) => el.lesson_code !== lesson_code)
-      lessonChanges.value.push(...resp.changes.map((el: LessonChange) => ({ ...el, isLoading: false })))
+      lessonChanges.value.push(...resp.map((el: LessonChange) => ({ ...el, isLoading: false })))
     } catch (e) {
-      console.warn('fetch /purple/change/many failed', e)
+      console.warn('fetch /purple/changes/getMany failed', e)
     }
   }
   const insertLessonChange = async (lessonChange: Partial<LessonChange>, group_code: string) => {
     if (!auth0.isAuthenticated.value) {
       return
     }
-    const resp = await (await fetch(`${import.meta.env.VITE_API_URL}/purple/change`, {
+    const resp = await (await fetch(`${import.meta.env.VITE_API_URL}/purple/changes/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -311,7 +311,7 @@ export const useScheduleStore = defineStore('schedule', () => {
       },
       body: JSON.stringify({ ...lessonChange, group_code })
     })).json()
-    lessonChanges.value.push({ ...resp.change, isLoading: false })
+    lessonChanges.value.push({ ...resp, isLoading: false })
     if (!lessonChange.start_date || !lessonChange.end_date) {
       return console.warn('insertLessonChange: start_date or end_date is not defined')
     }
@@ -326,8 +326,8 @@ export const useScheduleStore = defineStore('schedule', () => {
     if (!auth0.isAuthenticated.value) {
       return
     }
-    const resp = await (await fetch(`${import.meta.env.VITE_API_URL}/purple/change`, {
-      method: 'PATCH',
+    const resp = await (await fetch(`${import.meta.env.VITE_API_URL}/purple/changes/update`, {
+      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${await auth0.getAccessTokenSilently()}`
@@ -335,7 +335,7 @@ export const useScheduleStore = defineStore('schedule', () => {
       body: JSON.stringify({ ...lessonChange, group_code })
     })).json()
     lessonChanges.value = lessonChanges.value.filter((el) => el.code !== lessonChange.code)
-    lessonChanges.value.push({ ...resp.change, isLoading: false })
+    lessonChanges.value.push({ ...resp, isLoading: false })
     if (!lessonChange.start_date || !lessonChange.end_date) {
       return console.warn('updateLessonChange: start_date or end_date is not defined')
     }
@@ -354,17 +354,17 @@ export const useScheduleStore = defineStore('schedule', () => {
 
     try {
       return (await (
-        await fetch(`${import.meta.env.VITE_API_URL}/purple/lesson?${new URLSearchParams({ group_code, code })}`, {
+        await fetch(`${import.meta.env.VITE_API_URL}/purple/lessons/getSingle?${new URLSearchParams({ group_code, code })}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${await auth0.getAccessTokenSilently()}`
           }
         })
-      ).json())?.lesson
+      ).json())
 
     } catch (e) {
-      console.warn('fetch /purple/lesson failed', e)
+      console.warn('fetch /purple/lessons/getSingle failed', e)
     }
     return null
   }
@@ -376,17 +376,17 @@ export const useScheduleStore = defineStore('schedule', () => {
 
     try {
       return (await (
-        await fetch(`${import.meta.env.VITE_API_URL}/purple/change?${new URLSearchParams({ group_code, change_code })}`, {
+        await fetch(`${import.meta.env.VITE_API_URL}/purple/changes/getSingle?${new URLSearchParams({ group_code, change_code })}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${await auth0.getAccessTokenSilently()}`
           }
         })
-      ).json())?.change
+      ).json())
 
     } catch (e) {
-      console.warn('fetch /purple/change failed', e)
+      console.warn('fetch /purple/changes/getSingle failed', e)
     }
     return null
   }

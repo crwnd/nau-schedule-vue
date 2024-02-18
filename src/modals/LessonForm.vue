@@ -22,7 +22,7 @@ const currentDate = new Date()
 const lesson = ref<Lesson>({
   day_number: 1,
   week_number: 1,
-  template: null,
+  template: undefined,
   lecturers: undefined,
   subgroup: 0,
   comment: undefined,

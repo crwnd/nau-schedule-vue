@@ -34,7 +34,7 @@ export type Lesson = {
 export const LessonBase: Lesson = {
     day_number: 1,
     week_number: 1,
-    template: null,
+    template: undefined,
     lecturers: [],
     subgroup: 0,
     comment: "",
