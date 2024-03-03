@@ -24,7 +24,7 @@ export type Lesson = {
     comment?: string
     time: number
     duration?: number
-    places: { text: string, place_type: PlaceType }[] | null
+    places?: { text: string, place_type: PlaceType }[] | null
     canceled?: boolean
     lesson_type?: string
     recordings?: Array<string>,
@@ -113,8 +113,8 @@ export type LessonTemplate = {
     subgroup?: number,
     lecturers?: string[],
     names: string[],
-    time?: string,
-    duration?: string,
+    time?: number,
+    duration?: number,
     places?: { text: string, place_type: PlaceType }[],
     lesson_type?: string,
     canceled?: string,

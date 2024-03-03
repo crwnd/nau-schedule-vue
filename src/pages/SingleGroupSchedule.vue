@@ -75,8 +75,6 @@ const dateFromRoute = computed(() => {
     parseInt((route.params.month || '').toString()) - 1,
     parseInt((route.params.day || '').toString()),
   )
-  console.log('dateObj', dateObj)
-  console.log('date', date)
 
   return { date, week: getWeekNumber(date)[1], ...dateObj }
 })
@@ -308,7 +306,31 @@ onMounted(() => {
             <div id="week-schedule__topbar">
               <div class="month-selector">
                 <!-- <h2>Місяць</h2> -->
-                <input
+                <VueDatePicker
+                  :model-value="[
+                    getMonday(dateFromRoute.date),
+                    new Date(
+                      getMonday(dateFromRoute.date).valueOf() +
+                        1000 * 60 * 60 * 24 * 7 -
+                        1,
+                    ),
+                  ]"
+                  week-picker
+                  :enable-time-picker="false"
+                  :clearable="false"
+                  @update:model-value="
+                    router.push({
+                      params: {
+                        year: $event[0].getFullYear(),
+                        month: $event[0].getMonth() + 1,
+                        day: $event[0].getDate(),
+                      },
+                    })
+                  "
+                />
+                <!--
+                  Single day selector
+                  <input
                   :value="
                     [
                       dateFromRoute.year,
@@ -335,7 +357,7 @@ onMounted(() => {
                         },
                       })
                   "
-                />
+                /> -->
                 <!-- <select
                   :value="dateFromRoute.month + 1"
                   @input="
@@ -1018,6 +1040,7 @@ main {
 .schedule-table__col__lecture__subgroup__admin-actions {
   display: flex;
   flex-direction: row;
+  gap: 6px;
 }
 .schedule-table__col__lecture__subgroup__admin-actions button {
   padding: 4px 8px;

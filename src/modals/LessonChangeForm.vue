@@ -26,11 +26,11 @@ const lessonChange = ref<
   lecturers: undefined,
   comment: undefined,
   names: undefined,
-  time: 480,
-  duration: 95,
+  time: undefined,
+  duration: undefined,
   places: undefined,
   lesson_type: undefined,
-  recordings: [],
+  recordings: undefined,
   start_date: [
     props.state?.year ?? currentDate.getFullYear(),
     props.state?.month ?? currentDate.getMonth() + 1,
@@ -45,7 +45,7 @@ const lessonChange = ref<
 
 const applyTemplate = (e: Event) => {
   const target = e.target as HTMLSelectElement
-  const templates = scheduleStore.getTemplates(
+  const templates = scheduleStore.getSpecialityTemplates(
     props.state?.group_code as string,
   )
   const template = templates.find((t) => t.id === target.value)
@@ -117,7 +117,9 @@ scheduleStore.loadLecturers()
         >
           <option :value="null">Нічого</option>
           <option
-            v-for="(preset, i) in scheduleStore.getTemplates(state.group_code)"
+            v-for="(preset, i) in scheduleStore.getSpecialityTemplates(
+              state.group_code,
+            )"
             :key="i"
             :value="preset.id"
           >
@@ -252,7 +254,19 @@ scheduleStore.loadLecturers()
           "
         />
         <label for="lesson-time-checkbox">Змінити час</label>
-        <input
+        <VueDatePicker
+          v-if="!isUndefined(lessonChange.time)"
+          :model-value="{
+            hours: Math.floor((lessonChange.time ?? 0) / 60),
+            minutes: (lessonChange.time ?? 0) % 60,
+          }"
+          time-picker
+          :clearable="false"
+          @update:model-value="
+            lessonChange.time = $event.hours * 60 + $event.minutes
+          "
+        />
+        <!-- <input
           v-if="!isUndefined(lessonChange.time)"
           :value="`${pad(Math.floor((lessonChange.time ?? 0) / 60), 2)}:${pad(
             (lessonChange.time ?? 0) % 60,
@@ -267,10 +281,9 @@ scheduleStore.loadLecturers()
               .map((v) => parseInt(v))
               .reduce((acc, cur, i) => acc + cur * (i === 0 ? 60 : 1), 0)
           "
-        />
+        /> -->
         <p>Тривалість</p>
         <input
-          v-if="!isUndefined(lessonChange.duration)"
           type="checkbox"
           id="lesson-duration-checkbox"
           :checked="!isUndefined(lessonChange.duration)"
@@ -281,7 +294,20 @@ scheduleStore.loadLecturers()
           "
         />
         <label for="lesson-duration-checkbox">Змінити тривалість</label>
-        <input
+        <VueDatePicker
+          v-if="!isUndefined(lessonChange.duration)"
+          :model-value="{
+            hours: Math.floor((lessonChange.duration ?? 0) / 60),
+            minutes: (lessonChange.duration ?? 0) % 60,
+          }"
+          time-picker
+          :clearable="false"
+          @update:model-value="
+            lessonChange.duration = $event.hours * 60 + $event.minutes
+          "
+        />
+        <!-- <input
+          v-if="!isUndefined(lessonChange.duration)"
           :value="`${pad(Math.floor((lessonChange.duration ?? 0) / 60), 2)}:${pad(
             (lessonChange.duration ?? 0) % 60,
             2,
@@ -295,9 +321,27 @@ scheduleStore.loadLecturers()
               .map((v) => parseInt(v))
               .reduce((acc, cur, i) => acc + cur * (i === 0 ? 60 : 1), 0)
           "
-        />
+        /> -->
         <p>Початок</p>
-        <input
+        <VueDatePicker
+          :model-value="
+            new Date(
+              lessonChange.start_date[0],
+              lessonChange.start_date[1] - 1,
+              lessonChange.start_date[2],
+            )
+          "
+          :enable-time-picker="false"
+          :clearable="false"
+          @update:model-value="
+            lessonChange.start_date = [
+              $event.getFullYear(),
+              $event.getMonth() + 1,
+              $event.getDate(),
+            ]
+          "
+        />
+        <!-- <input
           :value="
             lessonChange.start_date
               ?.map((e, i) => (i !== 0 ? pad(e, 2) : e.toString()))
@@ -311,9 +355,27 @@ scheduleStore.loadLecturers()
               .split('-')
               .map((v) => parseInt(v))
           "
-        />
+        /> -->
         <p>Кінець</p>
-        <input
+        <VueDatePicker
+          :model-value="
+            new Date(
+              lessonChange.end_date[0],
+              lessonChange.end_date[1] - 1,
+              lessonChange.end_date[2],
+            )
+          "
+          :enable-time-picker="false"
+          :clearable="false"
+          @update:model-value="
+            lessonChange.end_date = [
+              $event.getFullYear(),
+              $event.getMonth() + 1,
+              $event.getDate(),
+            ]
+          "
+        />
+        <!-- <input
           :value="
             lessonChange.end_date
               ?.map((e, i) => (i !== 0 ? pad(e, 2) : e.toString()))
@@ -332,7 +394,7 @@ scheduleStore.loadLecturers()
               .split('-')
               .map((v) => parseInt(v))
           "
-        />
+        /> -->
         <p>Статус</p>
         <input
           type="checkbox"

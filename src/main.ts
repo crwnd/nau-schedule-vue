@@ -15,6 +15,10 @@ import LessonForm from './modals/LessonForm.vue'
 import LessonChangeForm from './modals/LessonChangeForm.vue'
 import SwitchInput from './components/SwitchInput.vue'
 
+
+import VueDatePicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css'
+
 const app = createApp(App)
 app.use(createPinia())
 app.use(router)
@@ -37,5 +41,7 @@ app.component('LessonView', LessonView)
 app.component('LessonForm', LessonForm)
 app.component('LessonChangeForm', LessonChangeForm)
 app.component('SwitchInput', SwitchInput)
+
+app.component('VueDatePicker', VueDatePicker);
 
 app.mount('#app')

@@ -93,7 +93,6 @@ export const useScheduleStore = defineStore('schedule', () => {
       new Date('Jan 01, ' + year + ' 01:00:00').getTime() +
       604800000 * (week - 1),
     ).getTime() + 1000 * 60 * 60 * 24)
-    console.log('getByHoursSchedule', group_code, week, year, preloadPrevNext)
 
     const schedule = getSchedule(group_code, week, year)
     if (schedule?.isLoading === false) {
@@ -217,7 +216,7 @@ export const useScheduleStore = defineStore('schedule', () => {
 
     try {
       const resp = await (
-        await fetch(`${import.meta.env.VITE_API_URL}/purple/template/index?${new URLSearchParams({ speciality })}`, {
+        await fetch(`${import.meta.env.VITE_API_URL}/purple/templates/index?${new URLSearchParams({ speciality })}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -227,13 +226,13 @@ export const useScheduleStore = defineStore('schedule', () => {
       ).json()
 
       templates.value[templates.value.findIndex((el) => el.speciality === speciality)] = {
-        isLoading: false, speciality: speciality, templates: resp.lesson_templates as LessonTemplate[]
+        isLoading: false, speciality: speciality, templates: resp as LessonTemplate[]
       }
     } catch (e) {
       console.warn('fetch /weekSchedule failed', e)
     }
   }
-  const getTemplates = (group_code: string) => {
+  const getSpecialityTemplates = (group_code: string) => {
     const groupsStore = useGroupsStore()
     const group = groupsStore.groups.find((el) => el.code === group_code)
     if (!group) {
@@ -394,7 +393,7 @@ export const useScheduleStore = defineStore('schedule', () => {
   return {
     dataStore, templates, lessonChanges, lecturers,
     getSchedule, getByHoursSchedule, getWeekNumber,
-    commentInputHandler, makeUpdate, getTemplates, getLesson, insertLesson, updateLesson, deleteLesson,
+    commentInputHandler, makeUpdate, getSpecialityTemplates, getLesson, insertLesson, updateLesson, deleteLesson,
     getLessonChange, getLessonChanges, insertLessonChange, updateLessonChange,
     loadLecturers
   }

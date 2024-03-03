@@ -5,9 +5,9 @@ import {
   type Lesson,
   PlaceType,
 } from '@/utils/types.d.js'
-import { pad, placeType } from '@/utils/functions.js'
+import { isUndefined, pad, placeType } from '@/utils/functions.js'
 import { useScheduleStore } from '@/stores/schedule'
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useGroupsStore } from '@/stores/groups'
 const scheduleStore = useScheduleStore()
 const groupsStore = useGroupsStore()
@@ -44,25 +44,39 @@ const lesson = ref<Lesson>({
   ],
 })
 
-const applyTemplate = (e: Event) => {
-  const target = e.target as HTMLSelectElement
-  const templates = scheduleStore.getTemplates(
+const template = computed(() => {
+  const templates = scheduleStore.getSpecialityTemplates(
     props.state?.group_code as string,
   )
-  const template = templates.find((t) => t.id === target.value)
+  return templates.find(
+    (t) =>
+      t.id === lesson.value.template ||
+      (lesson.value.template?.startsWith('-') &&
+        t.id === lesson.value.template.substring(1)),
+  )
+})
+
+const applyTemplate = (e: Event) => {
+  const target = e.target as HTMLSelectElement
+  const templates = scheduleStore.getSpecialityTemplates(
+    props.state?.group_code as string,
+  )
+  const template = templates.find(
+    (t) => t.id === target.value || t.id === `-${target.value}`,
+  )
   if (!template) {
     lesson.value.template = null
     return
   }
-  lesson.value.template = template.id
-  Object.entries(template).forEach(([key, value]) => {
-    if (typeof value !== 'undefined') {
-      lesson.value = {
-        ...lesson.value,
-        [key as keyof Lesson]: value,
-      }
-    }
-  })
+  lesson.value.template = `-${template.id}`
+  // Object.entries(template).forEach(([key, value]) => {
+  //   if (typeof value !== 'undefined') {
+  //     lesson.value = {
+  //       ...lesson.value,
+  //       [key as keyof Lesson]: value,
+  //     }
+  //   }
+  // })
 }
 
 watch(
@@ -85,23 +99,70 @@ scheduleStore.loadLecturers()
     </template>
     <div>
       <form @submit.prevent="emit('submit', lesson)" style="padding: 12px">
-        <p>Пресети</p>
-        <select
-          v-if="state?.group_code && lesson?.template"
+        <h3>Пресети</h3>
+        <input
+          type="checkbox"
+          id="lesson-template-checkbox"
+          :checked="!isUndefined(lesson.template)"
+          @change="
+            lesson.template = ($event.target as HTMLInputElement).checked
+              ? null
+              : undefined
+          "
+        />
+        <label for="lesson-template-checkbox">Використати пресет</label>
+        <br />
+        <!-- <select
+          v-if="
+            !isUndefined(lesson.template) &&
+            state?.group_code &&
+            lesson?.template
+          "
           :value="lesson?.template"
+          @change="
+            (e) => {
+              if ((e.target as HTMLSelectElement).value === 'spec') {
+                lesson.template = lesson.template?.startsWith('-')
+                  ? lesson.template
+                  : `-${lesson.template}`
+              }
+            }
+          "
+        >
+          <option value="spec" :selected="lesson.template?.startsWith('-')">
+            Спеціальності
+          </option>
+        </select> -->
+        <select
+          v-if="!isUndefined(lesson.template) && state?.group_code"
+          :value="lesson?.template?.substring(1)"
           @change="applyTemplate($event)"
         >
           <option :value="null">Нічого</option>
           <option
-            v-for="(preset, i) in scheduleStore.getTemplates(state.group_code)"
+            v-for="(preset, i) in scheduleStore.getSpecialityTemplates(
+              state.group_code,
+            )"
             :key="i"
             :value="preset.id"
           >
             {{ `${preset.id} - ${preset.names[0]}` }}
           </option>
         </select>
-        <p>Назва пари</p>
-        <div v-if="Array.isArray(lesson.names)">
+        <h3>Назва пари</h3>
+        <p v-if="template?.names">Пресет: {{ template.names }}</p>
+        <input
+          type="checkbox"
+          id="lesson-names-checkbox"
+          :checked="!isUndefined(lesson.names)"
+          @change="
+            lesson.names = ($event.target as HTMLInputElement).checked
+              ? []
+              : undefined
+          "
+        />
+        <label for="lesson-names-checkbox">Вказати</label>
+        <div v-if="!isUndefined(lesson.names) && Array.isArray(lesson.names)">
           <div v-for="(name, i) in lesson.names" :key="i">
             {{ i + 1 }}.
             <input
@@ -122,7 +183,10 @@ scheduleStore.loadLecturers()
           </div>
         </div>
         <button
-          v-if="!Array.isArray(lesson.names) || lesson.names.length < 2"
+          v-if="
+            !isUndefined(lesson.names) &&
+            (!Array.isArray(lesson.names) || lesson.names.length < 2)
+          "
           type="button"
           @click="
             Array.isArray(lesson.names)
@@ -132,8 +196,24 @@ scheduleStore.loadLecturers()
         >
           + Назва
         </button>
-        <p>Викладач</p>
-        <div v-if="Array.isArray(lesson.lecturers)">
+        <h3>Викладач</h3>
+        <p v-if="template?.lecturers">Пресет: {{ template.lecturers }}</p>
+        <input
+          type="checkbox"
+          id="lesson-lecturers-checkbox"
+          :checked="!isUndefined(lesson.lecturers)"
+          @change="
+            lesson.lecturers = ($event.target as HTMLInputElement).checked
+              ? []
+              : undefined
+          "
+        />
+        <label for="lesson-lecturers-checkbox">Вказати</label>
+        <div
+          v-if="
+            !isUndefined(lesson.lecturers) && Array.isArray(lesson.lecturers)
+          "
+        >
           <div v-for="(code, index) in lesson.lecturers" :key="index">
             <select
               :value="code"
@@ -154,17 +234,16 @@ scheduleStore.loadLecturers()
                 }}
               </option>
             </select>
-            <button
-              v-if="lesson?.lecturers && lesson.lecturers.length > 1"
-              type="button"
-              @click="lesson.lecturers.splice(index, 1)"
-            >
+            <button type="button" @click="lesson.lecturers.splice(index, 1)">
               X
             </button>
           </div>
         </div>
         <button
-          v-if="!Array.isArray(lesson.lecturers) || lesson.lecturers.length < 2"
+          v-if="
+            !isUndefined(lesson.lecturers) &&
+            (!Array.isArray(lesson.lecturers) || lesson.lecturers.length < 2)
+          "
           type="button"
           @click="
             Array.isArray(lesson.lecturers)
@@ -174,7 +253,7 @@ scheduleStore.loadLecturers()
         >
           + Викладач
         </button>
-        <p>День</p>
+        <h3>День</h3>
         <select v-model="lesson.day_number">
           <option value="1">Понеділок</option>
           <option value="2">Вівторок</option>
@@ -184,12 +263,12 @@ scheduleStore.loadLecturers()
           <option value="6">Субота</option>
           <option value="7">Неділя</option>
         </select>
-        <p>Тиждень</p>
+        <h3>Тиждень</h3>
         <select v-model="lesson.week_number">
           <option value="1">Перший</option>
           <option value="2">Другий</option>
         </select>
-        <p>Підгрупа</p>
+        <h3>Підгрупа</h3>
         <select v-model="lesson.subgroup">
           <option :value="0">Обидві</option>
           <option
@@ -211,14 +290,38 @@ scheduleStore.loadLecturers()
             Друга
           </option>
         </select>
-        <p>Тип</p>
-        <select v-model="lesson.lesson_type">
+        <h3>Тип</h3>
+        <p v-if="template?.lesson_type">Пресет: {{ template.lesson_type }}</p>
+        <input
+          type="checkbox"
+          id="lesson-lesson_type-checkbox"
+          :checked="!isUndefined(lesson.lesson_type)"
+          @change="
+            lesson.lesson_type = ($event.target as HTMLInputElement).checked
+              ? 'lecture'
+              : undefined
+          "
+        />
+        <label for="lesson-lesson_type-checkbox">Вказати</label>
+        <select
+          v-if="!isUndefined(lesson.lesson_type)"
+          v-model="lesson.lesson_type"
+        >
           <option value="lecture">Лекція</option>
           <option value="practical">Практика</option>
           <option value="lab">Лабораторна</option>
         </select>
-        <p>Час</p>
-        <input
+        <h3>Час</h3>
+        <VueDatePicker
+          :model-value="{
+            hours: Math.floor((lesson.time ?? 0) / 60),
+            minutes: (lesson.time ?? 0) % 60,
+          }"
+          time-picker
+          :clearable="false"
+          @update:model-value="lesson.time = $event.hours * 60 + $event.minutes"
+        />
+        <!-- <input
           :value="`${pad(Math.floor((lesson.time ?? 0) / 60), 2)}:${pad(
             (lesson.time ?? 0) % 60,
             2,
@@ -232,9 +335,41 @@ scheduleStore.loadLecturers()
               .map((v) => parseInt(v))
               .reduce((acc, cur, i) => acc + cur * (i === 0 ? 60 : 1), 0)
           "
-        />
-        <p>Тривалість</p>
+        /> -->
+        <h3>Тривалість</h3>
+        <p v-if="template?.duration">
+          Пресет:
+          {{
+            `${pad(Math.floor((template.duration ?? 0) / 60), 2)}:${pad(
+              (template.duration ?? 0) % 60,
+              2,
+            )}`
+          }}
+        </p>
         <input
+          type="checkbox"
+          id="lesson-duration-checkbox"
+          :checked="!isUndefined(lesson.duration)"
+          @change="
+            lesson.duration = ($event.target as HTMLInputElement).checked
+              ? template?.duration ?? 0
+              : undefined
+          "
+        />
+        <label for="lesson-duration-checkbox">Вказати</label>
+        <VueDatePicker
+          v-if="!isUndefined(lesson.duration)"
+          :model-value="{
+            hours: Math.floor((lesson.duration ?? 0) / 60),
+            minutes: (lesson.duration ?? 0) % 60,
+          }"
+          time-picker
+          :clearable="false"
+          @update:model-value="
+            lesson.duration = $event.hours * 60 + $event.minutes
+          "
+        />
+        <!-- <input
           :value="`${pad(Math.floor((lesson.duration ?? 0) / 60), 2)}:${pad(
             (lesson.duration ?? 0) % 60,
             2,
@@ -248,9 +383,27 @@ scheduleStore.loadLecturers()
               .map((v) => parseInt(v))
               .reduce((acc, cur, i) => acc + cur * (i === 0 ? 60 : 1), 0)
           "
+        /> -->
+        <h3>Початок</h3>
+        <VueDatePicker
+          :model-value="
+            new Date(
+              lesson.start_date[0],
+              lesson.start_date[1] - 1,
+              lesson.start_date[2],
+            )
+          "
+          :enable-time-picker="false"
+          :clearable="false"
+          @update:model-value="
+            lesson.start_date = [
+              $event.getFullYear(),
+              $event.getMonth() + 1,
+              $event.getDate(),
+            ]
+          "
         />
-        <p>Початок</p>
-        <input
+        <!-- <input
           :value="
             lesson.start_date
               .map((e, i) => (i !== 0 ? pad(e, 2) : e.toString()))
@@ -264,9 +417,27 @@ scheduleStore.loadLecturers()
               .split('-')
               .map((v) => parseInt(v))
           "
+        /> -->
+        <h3>Кінець</h3>
+        <VueDatePicker
+          :model-value="
+            new Date(
+              lesson.end_date[0],
+              lesson.end_date[1] - 1,
+              lesson.end_date[2],
+            )
+          "
+          :enable-time-picker="false"
+          :clearable="false"
+          @update:model-value="
+            lesson.end_date = [
+              $event.getFullYear(),
+              $event.getMonth() + 1,
+              $event.getDate(),
+            ]
+          "
         />
-        <p>Кінець</p>
-        <input
+        <!-- <input
           :value="
             lesson.end_date
               .map((e, i) => (i !== 0 ? pad(e, 2) : e.toString()))
@@ -285,8 +456,23 @@ scheduleStore.loadLecturers()
               .split('-')
               .map((v) => parseInt(v))
           "
+        /> -->
+        <h3>Місце</h3>
+        <p v-if="template?.places">
+          Пресет:
+          {{ template.places }}
+        </p>
+        <input
+          type="checkbox"
+          id="lesson-places-checkbox"
+          :checked="!isUndefined(lesson.places)"
+          @change="
+            lesson.places = ($event.target as HTMLInputElement).checked
+              ? []
+              : undefined
+          "
         />
-        <p>Місце</p>
+        <label for="lesson-places-checkbox">Вказати</label>
         <div v-if="Array.isArray(lesson.places)">
           <div v-for="(name, i) in lesson.places" :key="`${name}-${i}`">
             {{ i + 1 }}.
@@ -305,17 +491,14 @@ scheduleStore.loadLecturers()
                 {{ place_type[1] }}
               </option>
             </select>
-            <button
-              v-if="lesson.places?.length > 1"
-              type="button"
-              @click="lesson.places.splice(i, 1)"
-            >
-              X
-            </button>
+            <button type="button" @click="lesson.places.splice(i, 1)">X</button>
           </div>
         </div>
         <button
-          v-if="!Array.isArray(lesson.places) || lesson.places.length < 5"
+          v-if="
+            !isUndefined(lesson.places) &&
+            (!Array.isArray(lesson.places) || lesson.places.length < 5)
+          "
           type="button"
           @click="
             Array.isArray(lesson.places)
@@ -330,8 +513,24 @@ scheduleStore.loadLecturers()
         >
           + Місце
         </button>
-        <p>Скасовано</p>
+        <h3>Скасовано</h3>
+        <p v-if="template?.canceled">
+          Пресет:
+          {{ template.canceled }}
+        </p>
+        <input
+          type="checkbox"
+          id="lesson-canceled-checkbox"
+          :checked="!isUndefined(lesson.canceled)"
+          @change="
+            lesson.canceled = ($event.target as HTMLInputElement).checked
+              ? false
+              : undefined
+          "
+        />
+        <label for="lesson-canceled-checkbox">Вказати</label>
         <SwitchInput
+          v-if="!isUndefined(lesson.canceled)"
           :checked="lesson.canceled"
           id="lesson-form__lesson-canceled"
           name="lesson-form__lesson-canceled"
